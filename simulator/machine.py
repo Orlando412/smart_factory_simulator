@@ -11,7 +11,7 @@ class MachineSimulator:
 
     def __init__(self):
 
-        self.name = "AOI-01"
+        self.name = "machine-01"
 
         self.state = MachineState.STAND_BY
 
