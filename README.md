@@ -27,7 +27,7 @@ This project is intended to demonstrate:
 
 The simulator models equipment operating states:
 
-- WAIT
+- STAND BY
 - READY
 - RUN
 - ERROR
