@@ -1,5 +1,5 @@
 class Alarm:
-
+    """Represents an alarm in the system."""
     def __init__(self, code, message):
         self.code = code
         self.message = message
