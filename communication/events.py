@@ -10,13 +10,21 @@ class Event:
 
 
 class EventBus:
-
-    def __init__(self):
+    """Manages the publishing and handling of events."""
+    def __init__(self, historian):
         self.events = []
+        self.historian = historian
 
     def publish(self, event):
+
         self.events.append(event)
         print(f"[EVENT] {event}")
+        self.historian.log_event(
+            event.payload["machine"],
+            event.event_type,
+            event.payload
+        )
+
 
     def get_events(self):
         return self.events

@@ -2,20 +2,43 @@ import time
 from simulator.machine import MachineSimulator
 from communication.events import EventBus , Event
 from simulator.machine import MachineSimulator
+from simulator.factory import Factory
+from database.schema import initialize_database
+from database.historian import Historian
 
-event_bus = EventBus()
-machine = MachineSimulator(event_bus)
+initialize_database()
+historian = Historian()
+event_bus = EventBus(historian)
+factory = Factory(event_bus)
+
 
 try:
 
     while True:
 
-        machine.run_cycle()
+        
+        factory.run_cycle()
 
         time.sleep(1)
 
 except KeyboardInterrupt:
 
     print("\nSimulation Stopped")
+    print()
+
+    print("Database Summary")
+
+    print("----------------")
+
+    print(
+        historian.total_events(),
+        "events recorded."
+    )
+
+    print(
+        len(historian.alarms()),
+        "alarms logged."
+    )
+
     
-    machine.print_analytics_report()
+    factory.print_factory_report()

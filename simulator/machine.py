@@ -19,7 +19,7 @@ class MachineSimulator:
          Publish events to the EventBus
         """
 
-    def __init__(self, event_bus):
+    def __init__(self, event_bus, name):
         """
         Initialize machine parameters and runtime statistics.
 
@@ -28,14 +28,17 @@ class MachineSimulator:
                                   to broadcast machine events.
         """
         self.event_bus = event_bus
-
-        self.name = "machine-01"
+        self.quality_rate = 0.90
+        #self.name = "machine-01"
+        self.name = name
         self.state = MachineState.STAND_BY
+        self.total_cycles = 0
         self.current_alarm = None
         self.current_lot = ProductionLot(
             lot_Id="LOT001",
             quantity=100
         )
+
 
         # Historical analytics
         self.cycle_times = []
@@ -55,6 +58,8 @@ class MachineSimulator:
 
         self.ideal_cycle_time = 1.0
 
+        self.yield_rate = 100.0
+        self.current_cycle_time = self.ideal_cycle_time
     
     def run_cycle(self):
         """
@@ -85,8 +90,8 @@ class MachineSimulator:
             )
 
         elif self.state == MachineState.RUN:
-
-            if random.random() < 0.9:
+            
+            if random.random() < self.quality_rate:
                 self.good_units += 1
             else:
                 self.bad_units += 1
@@ -104,6 +109,14 @@ class MachineSimulator:
                 2
             )
 
+            self.current_cycle_time = round(
+                random.uniform(0.8, 1.2),
+                2
+            )
+            
+            time.sleep(self.current_cycle_time)
+
+
             self.units_processed = (
                 self.good_units +
                 self.bad_units
@@ -116,7 +129,10 @@ class MachineSimulator:
                         "machine": self.name,
                         "units_processed": self.units_processed,
                         "good_units": self.good_units,
-                        "bad_units": self.bad_units
+                        "bad_units": self.bad_units,
+                        "lot_id": self.current_lot.lot_Id,
+                        "yield_rate": self.yield_rate,
+                        "cycle_time": self.current_cycle_time
                     }
                 )
             )
@@ -199,9 +215,11 @@ class MachineSimulator:
                         }
                     )
                 )
-                # self.current_alarm = random.choice(ALARMS)
+                
                 self.state = MachineState.ERROR
                 self.downtime += 1
+
+                self.total_cycles += 1
     
         elif self.state == MachineState.ERROR:
 
@@ -225,6 +243,54 @@ class MachineSimulator:
 
             self.current_alarm = None
             self.state = MachineState.STAND_BY
+
+
+    def get_utilization(self):
+
+        total_time = (
+            self.runtime +
+            self.downtime
+        )
+
+        if total_time == 0:
+            return 0
+
+        return round(
+            self.runtime /
+            total_time * 100,
+            2
+        )
+
+
+    def get_average_cycle_time(self):
+
+        if not self.cycle_times:
+            return 0
+
+        return round(
+            sum(self.cycle_times) /
+            len(self.cycle_times),
+            2
+        )
+
+
+    def get_throughput_rate(self):
+
+        elapsed = (
+            time.time() -
+            self.start_time
+        )
+
+        if elapsed == 0:
+            return 0
+
+        return round(
+            self.units_processed /
+            elapsed * 60,
+            2
+        )
+
+
 
     def print_analytics_report(self):
         """
@@ -263,4 +329,14 @@ class MachineSimulator:
             f"Total Units: "
             f"{self.units_processed}"
         )
+
+        print("\nMachine Performance:")
+        for machine in self.machines:
+            print(
+                f"{machine.name}"
+                f" | Utilization: {machine.get_utilization()}%"
+                f" | Avg CT: {machine.get_average_cycle_time()}s"
+                f" | Throughput: {machine.get_throughput_rate()} UPM"
+            )
+
         print("====================================")
